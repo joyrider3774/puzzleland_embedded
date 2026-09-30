@@ -1,0 +1,6 @@
+C:/github/puzzleland_embedded/platforms/platforms/aka_sdl/build/CMakeFiles/puzzleland_aka.dir
+C:/github/puzzleland_embedded/platforms/platforms/aka_sdl/build/CMakeFiles/edit_cache.dir
+C:/github/puzzleland_embedded/platforms/platforms/aka_sdl/build/CMakeFiles/rebuild_cache.dir
+C:/github/puzzleland_embedded/platforms/platforms/aka_sdl/build/gamebuino_sdl/CMakeFiles/gamebuino.dir
+C:/github/puzzleland_embedded/platforms/platforms/aka_sdl/build/gamebuino_sdl/CMakeFiles/edit_cache.dir
+C:/github/puzzleland_embedded/platforms/platforms/aka_sdl/build/gamebuino_sdl/CMakeFiles/rebuild_cache.dir

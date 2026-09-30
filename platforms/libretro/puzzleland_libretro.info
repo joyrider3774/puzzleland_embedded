@@ -1,0 +1,29 @@
+# Software Information
+display_name = "Puzzleland"
+authors = "Willems Davy"
+supported_extensions = ""
+corename = "Puzzleland"
+categories = "Game"
+license = "MIT"
+permissions = ""
+display_version = "1.0"
+
+# Hardware Information
+manufacturer = "N/A"
+systemname = "Puzzleland"
+systemid = "puzzleland"
+
+# Libretro Features
+supports_no_game = "true"
+savestate = "false"
+cheats = "false"
+input_descriptors = "true"
+memory_descriptors = "false"
+libretro_saves = "true"
+core_options = "false"
+hw_render = "false"
+needs_fullpath = "false"
+disk_control = "false"
+is_experimental = "false"
+
+description = "Fit the pieces into the shape puzzle game"

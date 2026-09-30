@@ -1,0 +1,6 @@
+name=Puzzleland
+author=Willems Davy aka Joyrider3774
+description=Fit the pieces into the shape puzzle game
+bundleID=com.joyrider3774.puzzleland.embedded
+version=1.0
+buildNumber=1
