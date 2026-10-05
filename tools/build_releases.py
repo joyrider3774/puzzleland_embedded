@@ -107,9 +107,9 @@ TARGETS = [
     #The CHGame has 50944 bytes for everything and room for about sixteen of the 36 rooms,
     #so they are spread twelve to a binary. A room keeps its number whichever binary holds
     #it, so a password names the same room in all three, see FIRSTLEVEL in defines.h
-    ("CHGame", "_1", {"FIRSTLEVEL": 0, "MAXLEVELS": 12}),    #rooms 1-12
-    ("CHGame", "_2", {"FIRSTLEVEL": 12, "MAXLEVELS": 12}),   #rooms 13-24
-    ("CHGame", "_3", {"FIRSTLEVEL": 24, "MAXLEVELS": 12}),   #rooms 25-36
+    ("CHGame", "_1", {"CHGAME_SAVE_VARIANT": 1, "FIRSTLEVEL": 0, "MAXLEVELS": 12}),    #rooms 1-12
+    ("CHGame", "_2", {"CHGAME_SAVE_VARIANT": 2, "FIRSTLEVEL": 12, "MAXLEVELS": 12}),   #rooms 13-24
+    ("CHGame", "_3", {"CHGAME_SAVE_VARIANT": 3, "FIRSTLEVEL": 24, "MAXLEVELS": 12}),   #rooms 25-36
     ("PyBadge", "", {}),
     ("PyGamer", "", {}),
     ("PicoSystem", "", {}),
@@ -210,7 +210,7 @@ DEVICES = {
         "uf2": (0x4000, 0x55114460),
     },
     "PicoSystem": {
-        "fqbn": "rp2040:rp2040:generic:flash=16777216_0,boot2=boot2_w25q080_2_padded_checksum,freq=133,usbstack=picosdk,opt=Small",
+        "fqbn": "rp2040:rp2040:generic:flash=16777216_0,boot2=boot2_w25q080_2_padded_checksum,freq=125,usbstack=picosdk,opt=Small",
         "outputs": ["uf2"],
     },
     "Explorer": {
