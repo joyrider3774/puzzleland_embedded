@@ -261,10 +261,10 @@ void NextStageLevel1to35Init()
 	//out of that band instead, which leaves the box in clear sky. The big ones drift faster, so
 	//they are the near ones and sit high; the small slow ones are the far ones and sit down by the
 	//horizon, which the buildings reach at row 53. A big cloud is 14 rows and a small one 7
-	Cloud1 = CCloud_Create(120,1,-0.40f,Big);
-	Cloud2 = CCloud_Create(90,30,-0.25f,Small);
-	Cloud3 = CCloud_Create(50,2,-0.40f,Big);
-	Cloud4 = CCloud_Create(25,42,-0.25f,Small);
+	Cloud1 = CCloud_Create(120,1,CLOUD_SPEED(-0.40f),Big);
+	Cloud2 = CCloud_Create(90,30,CLOUD_SPEED(-0.25f),Small);
+	Cloud3 = CCloud_Create(50,2,CLOUD_SPEED(-0.40f),Big);
+	Cloud4 = CCloud_Create(25,42,CLOUD_SPEED(-0.25f),Small);
 	SpaceShip = CSpaceShip_Create();
 	Fairy = CFairy_Create(64,75,6);
 	switch (Level)
@@ -478,10 +478,10 @@ void NextStageLevel1to35()
 
 #if SCREENBUFFER == 0
 		//where everything stands now against where it was painted, before any of it is painted
-		MarkMoved(&paintedCloud[0], true, (int16_t)Cloud1->X, Cloud1->Y, Cloud1->Width, Cloud1->Height, 0);
-		MarkMoved(&paintedCloud[1], true, (int16_t)Cloud2->X, Cloud2->Y, Cloud2->Width, Cloud2->Height, 0);
-		MarkMoved(&paintedCloud[2], true, (int16_t)Cloud3->X, Cloud3->Y, Cloud3->Width, Cloud3->Height, 0);
-		MarkMoved(&paintedCloud[3], true, (int16_t)Cloud4->X, Cloud4->Y, Cloud4->Width, Cloud4->Height, 0);
+		MarkMoved(&paintedCloud[0], true, CCloud_ScreenX(Cloud1), Cloud1->Y, Cloud1->Width, Cloud1->Height, 0);
+		MarkMoved(&paintedCloud[1], true, CCloud_ScreenX(Cloud2), Cloud2->Y, Cloud2->Width, Cloud2->Height, 0);
+		MarkMoved(&paintedCloud[2], true, CCloud_ScreenX(Cloud3), Cloud3->Y, Cloud3->Width, Cloud3->Height, 0);
+		MarkMoved(&paintedCloud[3], true, CCloud_ScreenX(Cloud4), Cloud4->Y, Cloud4->Width, Cloud4->Height, 0);
 		//the player with the shadow under him, which reaches a little wider than he does. He walks
 		//on the spot as well, so the frame he is drawn in counts as much as where he stands
 		MarkMoved(&paintedPlayer, true, Player->X, Player->Y,
@@ -584,10 +584,10 @@ void NextStageLevel0Init()
 
 	//the first screen starts next to the building on the right, see NextStageLevel1to35Init
 	Player = CPlayer_Create(80,90,80,100);
-	Cloud1 = CCloud_Create(120,7,-0.40f,Big);
-	Cloud2 = CCloud_Create(90,20,-0.25f,Small);
-	Cloud3 = CCloud_Create(50,3,-0.40f,Big);
-	Cloud4 = CCloud_Create(25,25,-0.25f,Small);;
+	Cloud1 = CCloud_Create(120,7,CLOUD_SPEED(-0.40f),Big);
+	Cloud2 = CCloud_Create(90,20,CLOUD_SPEED(-0.25f),Small);
+	Cloud3 = CCloud_Create(50,3,CLOUD_SPEED(-0.40f),Big);
+	Cloud4 = CCloud_Create(25,25,CLOUD_SPEED(-0.25f),Small);;
 }
 
 void NextStageLevel0DeInit()
@@ -640,10 +640,10 @@ void NextStageLevel0()
 
 #if SCREENBUFFER == 0
 	//where everything stands now against where it was painted, see NextStageLevel1to35
-	MarkMoved(&paintedCloud[0], true, (int16_t)Cloud1->X, Cloud1->Y, Cloud1->Width, Cloud1->Height, 0);
-	MarkMoved(&paintedCloud[1], true, (int16_t)Cloud2->X, Cloud2->Y, Cloud2->Width, Cloud2->Height, 0);
-	MarkMoved(&paintedCloud[2], true, (int16_t)Cloud3->X, Cloud3->Y, Cloud3->Width, Cloud3->Height, 0);
-	MarkMoved(&paintedCloud[3], true, (int16_t)Cloud4->X, Cloud4->Y, Cloud4->Width, Cloud4->Height, 0);
+	MarkMoved(&paintedCloud[0], true, CCloud_ScreenX(Cloud1), Cloud1->Y, Cloud1->Width, Cloud1->Height, 0);
+	MarkMoved(&paintedCloud[1], true, CCloud_ScreenX(Cloud2), Cloud2->Y, Cloud2->Width, Cloud2->Height, 0);
+	MarkMoved(&paintedCloud[2], true, CCloud_ScreenX(Cloud3), Cloud3->Y, Cloud3->Width, Cloud3->Height, 0);
+	MarkMoved(&paintedCloud[3], true, CCloud_ScreenX(Cloud4), Cloud4->Y, Cloud4->Width, Cloud4->Height, 0);
 	MarkMoved(&paintedPlayer, true, Player->X, Player->Y,
 	          (int16_t)((ryfPlayerWidth > 1 + ryfShadowWidth) ? ryfPlayerWidth : 1 + ryfShadowWidth), ryfPlayerHeight + ryfShadowHeight,
 	          Player->AnimPhase);
