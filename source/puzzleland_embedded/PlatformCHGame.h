@@ -32,6 +32,30 @@
 //for 0 (straight to the display) or a 1 bpp buffer, which is 2048 bytes. An 8 bpp buffer would be
 //16384 of the 20464 and leave nothing for the stack, the heap and the SD card, so it is not
 //offered. A build can still set this itself
+//There is a card slot on this board, and this device reads its art off it rather than carrying
+//it in flash: every skin in full RGB565 instead of the one reduced skin that fits. See CARDIMAGES
+//in defines.h and the card file tools/mkcard.py writes.
+//Set here and not only by the build, so the Arduino IDE builds the same thing; -DCARDIMAGES=0
+//builds the old flash version. It has to be settled here, before the switches below that ask it
+#ifndef CARDIMAGES
+#define CARDIMAGES 1
+#endif
+//Only such a build, because saying so is what pulls the reader in (CHSd, see the card section of
+//PlatformCHGame.cpp): a flash build needs no library installed
+#if CARDIMAGES
+#define PLATFORM_HAS_CARD 1
+
+//No multi-block card reads here, see CARD_MULTIBLOCK in PlatformCHGame.cpp. They are worth
+//having - a read of several blocks in one command is close to nine times faster a block than a
+//command each - but they cost about 884 bytes of flash and this game has not got them: it is
+//the one that puts all 36 rooms in a single binary and sits at 99% of the 50944 bytes, with
+//472 to spare. The 512 byte second DMA buffer goes with them. Turn this back on with anything
+//that frees up the flash for it
+#ifndef CARD_MULTIBLOCK
+#define CARD_MULTIBLOCK 0
+#endif
+#endif
+
 #ifndef SCREENBUFFER
 #define SCREENBUFFER 0
 #endif
@@ -43,12 +67,17 @@
 //FORCESKIN in defines.h. The black & white skin is the one that is taken: its pictures are
 //packed one bit a pixel rather than kept as RGB565, which is what makes the game fit at all.
 //A 1 bpp buffer picks that skin itself, and a build can still ask for another one
-#if !defined(FORCESKIN) && (SCREENBUFFER != 1)
+//A card build names no skin: every one of them is on the card and the game is asked for one while
+//it runs, see CardImages_UseSkin
+#if !defined(FORCESKIN) && (SCREENBUFFER != 1) && !CARDIMAGES
 #define FORCESKIN skinBlackWhite
 #endif
 
 //The device has the least flash of any of them and the game does not otherwise fit, so it leaves
-//out the two pictures that are shown once each and nowhere else, see defines.h
+//out the pictures that are shown once each and nowhere else, see defines.h.
+//Not in a card build: the pictures are on the card and the flash they would have cost is not
+//spent, so the game shows everything it was written to show
+#if !CARDIMAGES
 #ifndef INTROSCREEN
 #define INTROSCREEN 0
 #endif
@@ -57,6 +86,7 @@
 #endif
 #ifndef PAPERBACKGROUND
 #define PAPERBACKGROUND 0
+#endif
 #endif
 
 //The pixel loops are put in ram rather than run from flash. The core fetches from flash with wait
@@ -148,6 +178,7 @@ typedef PlatformCHGameBuffer PlatformBuffer;
 
 //flash is ordinary memory on the CH32X035, it can be read like any other
 #define PLATFORM_PROGMEM
+
 #define PLATFORM_READ_BYTE(addr) (*(const uint8_t*)(addr))
 
 //the images are little endian RGB565 like the chip itself, memcpy keeps a read from an odd

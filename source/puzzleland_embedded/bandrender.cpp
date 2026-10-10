@@ -3,6 +3,8 @@
 #include "helperfuncs.h"
 #include "commonvars.h"
 #include "bandrender.h"
+//a card build takes a strip of the background off the card, see cardimages.h
+#include "cardimages.h"
 //the strips hold pictures of the black & white skin too, and those are one bit a pixel
 #include "onebitimage.h"
 
@@ -22,7 +24,7 @@ static uint16_t* bandBuf = NULL;
 //read from its start, and a strip at the bottom of the screen would decode the whole image
 //Only for a build that can still be asked for an RGB565 skin, see ONEBITONLY: a one bit only
 //build never reads these and they are the width of the screen twice over
-#if !ONEBITONLY
+#if !ONEBITONLY && !CARDIMAGES
 static uint16_t* bgRowOffset = NULL;
 static uint8_t* bgRowUsed = NULL;
 //the background bgRowOffset and bgRowUsed were made for
@@ -62,7 +64,7 @@ static inline uint16_t ReadPixel(const uint8_t* p)
 }
 
 //walks the background once and writes down where every row of the screen starts
-#if !ONEBITONLY
+#if !ONEBITONLY && !CARDIMAGES
 static void IndexBackground(const uint8_t* image)
 {
 	const uint8_t* data = image;
@@ -130,7 +132,14 @@ static PLATFORM_HOT_CODE void BandBackgroundOneBit(const uint8_t* image)
 //the piece of the background the strip covers, which is what the strip starts as
 static void BandBackground(const uint8_t* image)
 {
-#if ONEBITIMAGES
+#if CARDIMAGES
+	//The strip is WINDOW_WIDTH by BANDHEIGHT of RGB565, which is what this buffer is, so the
+	//background's rows are read from the card straight into it: nothing to decode, no second copy,
+	//and no index to carry. This is where nearly all of a card build's bytes are read
+	//the whole strip in one read where the rows lie together, see CardImages_Rows
+	if (!CardImages_Rows(image, stripX, stripY, stripW, stripH, bandBuf))
+		memset(bandBuf, 0, (size_t)stripW * stripH * 2);
+#elif ONEBITIMAGES
 	//the skin built in keeps its pictures one bit a pixel, so there is no RGB565 to read
 	BandBackgroundOneBit(image);
 #else
@@ -218,7 +227,7 @@ void BandRender_Init(void)
 	//Put everything that says what the display holds back first, and do it whether or not the
 	//memory is already there: a screen that starts paints from nothing, and what the screen
 	//before it left in here would make this one skip work it has to do
-#if !ONEBITONLY
+#if !ONEBITONLY && !CARDIMAGES
 	bgIndexed = NULL;
 #endif
 	sumBackground = NULL;
@@ -230,12 +239,12 @@ void BandRender_Init(void)
 	if (bandBuf)
 		return;
 	bandBuf = (uint16_t*)malloc((size_t)WINDOW_WIDTH * BANDHEIGHT * sizeof(uint16_t));
-#if !ONEBITONLY
+#if !ONEBITONLY && !CARDIMAGES
 	bgRowOffset = (uint16_t*)malloc((size_t)WINDOW_HEIGHT * sizeof(uint16_t));
 	bgRowUsed = (uint8_t*)malloc((size_t)WINDOW_HEIGHT);
 #endif
 	if (!bandBuf
-#if !ONEBITONLY
+#if !ONEBITONLY && !CARDIMAGES
 	    || !bgRowOffset || !bgRowUsed
 #endif
 	   )
@@ -251,7 +260,7 @@ void BandRender_Deinit(void)
 {
 	free(bandBuf);
 	bandBuf = NULL;
-#if !ONEBITONLY
+#if !ONEBITONLY && !CARDIMAGES
 	free(bgRowOffset);
 	free(bgRowUsed);
 	bgRowOffset = NULL;
@@ -371,6 +380,57 @@ void BandRender_Image(int x, int y, int sx, int sy, int w, int h, const uint8_t*
 		PLATFORM_READ_BYTES((uint8_t*)dst, src, (size_t)(c1 - c0) * 2);
 	}
 }
+
+#if CARDIMAGES
+//A picture from the card into the strip, see cardimages.h. The rows are read with nothing of the
+//display's open, which is the bus rule a shared bus imposes, and the strip goes out afterwards;
+//that is what makes a strip the right place to draw a card build's pictures
+void BandRender_ImageCard(int x, int y, int sx, int sy, int w, int h, const uint8_t* data,
+                          bool transparent)
+{
+	if (!data || (w <= 0) || (h <= 0))
+		return;
+	const int ox = x - sx, oy = y - sy;
+	int c0 = sx, c1 = sx + w, r0 = sy, r1 = sy + h;
+	if (c0 < stripX - ox) c0 = stripX - ox;
+	if (r0 < stripY - oy) r0 = stripY - oy;
+	if (c1 > stripX + stripW - ox) c1 = stripX + stripW - ox;
+	if (r1 > stripY + stripH - oy) r1 = stripY + stripH - oy;
+	if ((c0 >= c1) || (r0 >= r1))
+		return;
+	const int cols = c1 - c0;
+	//A picture small enough to be kept whole sits in RAM, and its rows are copied out of it
+	//rather than asked for one at a time: that is the same copy a flash build makes, and for
+	//a sheet drawn hundreds of times a frame it is most of what a strip costs
+	const uint8_t* px = CardImages_Cached(data);
+	const int pitch = px ? (int)CardImages_Width(data) : 0;
+	for (int r = r0; r < r1; r++)
+	{
+		uint16_t* dst = &bandBuf[(oy + r - stripY) * stripW + (ox + c0 - stripX)];
+		uint16_t scratch[WINDOW_WIDTH];
+		const uint16_t* src;
+		if (px)
+			src = (const uint16_t*)(px + ((size_t)r * pitch + c0) * sizeof(uint16_t));
+		else if (CardImages_Row(data, c0, r, cols, scratch))
+			src = scratch;
+		else
+		{
+			//the row did not come, so nothing of it is drawn
+			continue;
+		}
+		if (!transparent)
+		{
+			//nothing to leave out, so the row lands in the strip where it belongs
+			memcpy(dst, src, (size_t)cols * sizeof(uint16_t));
+			continue;
+		}
+		//the transparent pixels keep what the strip already holds
+		for (int c = 0; c < cols; c++)
+			if (src[c] != COLOR_TRANSPARENT)
+				dst[c] = src[c];
+	}
+}
+#endif
 
 #if ONEBITIMAGES
 //A one bit picture into the strip, see onebitimage.h. The strip holds plain RGB565, so the bits

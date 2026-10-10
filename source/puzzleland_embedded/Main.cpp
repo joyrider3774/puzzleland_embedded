@@ -17,6 +17,8 @@
 #include "chand.h"
 #include "commonvars.h"
 #include "helperfuncs.h"
+//the art read from a card, which a card build finds before it points anything at it
+#include "cardimages.h"
 #include "sound.h"
 
 //The program itself, Game_Setup and Game_Loop are called by the device's own source
@@ -78,6 +80,26 @@ static void printDebugCpuRamLoad()
     }
 }
 
+#if CARDIMAGES
+//Says what is wrong with the card and leaves it on the screen. Drawn with the display's own font
+//and fills, since every picture the game has is on the card that is not there.
+//Not a state of the game: there is nothing to go on to, and a card put in later is not noticed
+//until the game is started again
+static void CardFailScreen(const char* problem)
+{
+	fillScreen(SCREEN.color565(0, 0, 0));
+	printText(6, 40, "CARD PROBLEM", SCREEN.color565(255, 255, 255), SCREEN.color565(0, 0, 0), 1);
+	printText(6, 56, problem ? problem : "UNKNOWN", SCREEN.color565(255, 80, 80),
+	          SCREEN.color565(0, 0, 0), 1);
+	printText(6, 80, "PUT " CARD_FILE_NAME, SCREEN.color565(160, 160, 160),
+	          SCREEN.color565(0, 0, 0), 1);
+	printText(6, 92, "ON THE CARD", SCREEN.color565(160, 160, 160),
+	          SCREEN.color565(0, 0, 0), 1);
+	Platform_PresentFrame();
+	Platform_Log("card: %s\n", problem ? problem : "unknown");
+}
+#endif
+
 void Game_Setup(void)
 {   
     //webAppStore is set in Platform_Init
@@ -90,6 +112,16 @@ void Game_Setup(void)
 		GameState = INTROSCREEN ? GSIntroInit : GSTitleScreenInit;
 		OldTime = 0;
 
+#if CARDIMAGES
+		//The art is on the card, so it is found before anything is pointed at it. Without it the
+		//game has no pictures at all and there is nothing worth starting: the screen says what is
+		//wrong and the game stops there, see CardFailScreen
+		if (!CardImages_Open())
+		{
+			CardFailScreen(CardImages_Problem());
+			return;
+		}
+#endif
 		preloadImages();
 		initSound();
 		initMusic();

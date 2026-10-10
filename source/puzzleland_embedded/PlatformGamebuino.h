@@ -30,7 +30,9 @@
 //Only one skin fits in the flash next to the game: -1 = every skin, n = only skin n, see
 //FORCESKIN in defines.h. A 1 bpp buffer picks the black & white skin itself. A build can
 //still set it itself
-#if !defined(FORCESKIN) && (SCREENBUFFER != 1)
+//A card build names no skin: every one of them is on the card and the game is asked for one
+//while it runs, see CardImages_UseSkin
+#if !defined(FORCESKIN) && (SCREENBUFFER != 1) && !CARDIMAGES
 #define FORCESKIN 0
 #endif
 
@@ -113,6 +115,13 @@ typedef PlatformGamebuinoBuffer PlatformBuffer;
 
 //flash is ordinary memory on the SAMD21, it can be read like any other
 #define PLATFORM_PROGMEM
+//There is a card slot on this device and the save file already uses it, so a build with
+//CARDIMAGES on can read its art off it too: every skin in full RGB565 instead of the one reduced
+//skin the 245760 bytes of flash hold. See the card section of PlatformGamebuino.cpp
+#if CARDIMAGES
+#define PLATFORM_HAS_CARD 1
+#endif
+
 #define PLATFORM_READ_BYTE(addr) (*(const uint8_t*)(addr))
 
 //the images are little endian RGB565 like the SAMD21 itself, memcpy keeps a read from an odd

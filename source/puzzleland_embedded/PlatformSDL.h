@@ -32,6 +32,10 @@ typedef LGFX_Sprite PlatformBuffer;
 
 //flash data is ordinary memory on a PC
 #define PLATFORM_PROGMEM
+//A card is an ordinary file here, so a card build can be run and looked at on the desktop rather
+//than only on the devices that need it. See Platform_CardOpen in PlatformSDL.cpp
+#define PLATFORM_HAS_CARD 1
+
 #define PLATFORM_READ_BYTE(addr) (*(const uint8_t*)(addr))
 
 //the images are little endian RGB565 like the PC itself, memcpy keeps a read from an odd

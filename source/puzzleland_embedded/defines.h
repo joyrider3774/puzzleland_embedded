@@ -5,6 +5,24 @@
 //PlatformESPboy.h / PlatformSDL.h
 #include "PlatformDevice.h"
 
+//1 = the art is read from a card while the game runs and none of it is in flash, see
+//cardimages.h. It needs a device that can read one (PLATFORM_HAS_CARD in Platform.h) and the card
+//file tools/mkcard.py writes. Every skin is then on the card in full RGB565 and the game can be
+//asked for any of them, which is what flash could never hold: the whole reason only one reduced
+//skin is built in is the 50944 bytes a device has for everything
+#ifndef CARDIMAGES
+#define CARDIMAGES 0
+#endif
+
+//How much RAM a card build keeps its art in. A picture small enough to be worth it is read once
+//and kept here, so drawing it again is a copy; a full screen one is read a row or a strip at a
+//time and never kept. A screen whose pictures do not all fit still draws correctly, it just reads
+//them again, which CardImages_Reads() counts. See the arena in cardimages.cpp
+#ifndef CARDARENA
+#define CARDARENA 3072
+#endif
+
+
 // window size, the ESPboy display
 #define WINDOW_WIDTH 128
 #define WINDOW_HEIGHT 128
@@ -183,7 +201,8 @@
 //bit routines in onebitimage.cpp. Only the black & white skin is kept that way: it shows
 //two colours, and keeping each of them in sixteen bits costs both flash and the work of
 //writing a colour per pixel. Only one skin is ever built in, so the choice is known here
-#define ONEBITIMAGES (FORCESKIN == skinBlackWhite)
+//A card build has no skin built in at all, so neither of the flash formats is there
+#define ONEBITIMAGES (!CARDIMAGES && (FORCESKIN == skinBlackWhite))
 
 //1 when the black & white skin is the only one in the build. Every picture is then one bit a pixel
 //and the paths that read RGB565 are dead: a build that is only ever going to draw one bit pictures

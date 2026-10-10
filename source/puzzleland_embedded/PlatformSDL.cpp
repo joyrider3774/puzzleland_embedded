@@ -308,6 +308,46 @@ static void StorageLoad(uint8_t* block)
 	}
 }
 
+// ===========================================================================
+// The card
+// ===========================================================================
+
+//The game's data file, the one tools/mkcard.py writes. Here it is a plain file beside the
+//program, so a card build can be run on the desktop; the devices that need this read it off a
+//real card, see Platform_CardOpen there
+static FILE* cardFile = NULL;
+
+bool Platform_CardOpen(const char* name, const char* name83)
+{
+	(void)name83;   //only a reader that looks a file up in a FAT directory wants that form
+	Platform_CardClose();
+	cardFile = fopen(name, "rb");
+	if (!cardFile)
+	{
+		Platform_Log("no %s beside the program, the card build has no art\n", name);
+		return false;
+	}
+	return true;
+}
+
+bool Platform_CardRead(uint32_t offset, void* dst, uint32_t length)
+{
+	if (!cardFile)
+		return false;
+	if (fseek(cardFile, (long)offset, SEEK_SET) != 0)
+		return false;
+	return fread(dst, 1, length, cardFile) == length;
+}
+
+void Platform_CardClose(void)
+{
+	if (cardFile)
+	{
+		fclose(cardFile);
+		cardFile = NULL;
+	}
+}
+
 void Platform_StorageRead(uint16_t offset, uint8_t* data, uint16_t length)
 {
 	uint8_t block[PLATFORM_STORAGE_SIZE];

@@ -1,6 +1,8 @@
 #include <stdint.h>
 #include "commonvars.h"
 #include "bandrender.h"
+//the art read from a card, where a card build gets its rows from
+#include "cardimages.h"
 #include "helperfuncs.h"
 //the one bit pictures of the black & white skin, which the band renderer reads too
 #include "onebitimage.h"
@@ -59,6 +61,10 @@ static inline const uint16_t* ImageRow(const void* src, uint16_t* scratch, int c
     return scratch;
 }
 
+//A card build has no art in flash at all: the pictures come off the card while the game runs,
+//every skin of them, see cardimages.h. So none of the generated headers are part of it, and
+//the sizes are checked against the card's index rather than at compile time
+#if !CARDIMAGES
 //only the skin FORCESKIN picks is part of the build (a 1 bpp buffer takes the black & white one
 //unless the build asks for another)
 #if FORCESKIN == skinDefault
@@ -192,18 +198,24 @@ static_assert((SKIN_IMAGE(ryf_fairy_width) == ryfFairyWidth) && (SKIN_IMAGE(ryf_
 			  "the fairy image of the skin is not 2 tiles of 13 x 16");              
 static_assert((SKIN_IMAGE(ryf_player_width) == ryfPlayerWidth) && (SKIN_IMAGE(ryf_player_height) == ryfPlayerHeight * 19),
 			  "the player image of the skin is not 19 tiles of 14 x 14");
+#endif
 
-//the skin in use, the one FORCESKIN builds in
+//The skin in use. A flash build has the one FORCESKIN put in it and no other; a card build has
+//every skin on the card and this is whichever of them is being shown, see CardImages_UseSkin
 uint8_t currentSkin(void)
 {
+#if CARDIMAGES
+    return CardImages_Skin();
+#else
     return FORCESKIN;
+#endif
 }
 
 void preloadImages(void)
 {
     switch(currentSkin())
     {
-#if FORCESKIN == skinDefault
+#if CARDIMAGES || (FORCESKIN == skinDefault)
         case skinDefault:
             ColorBackground = SCREEN.color565(255,255,255);
             ColorForeground = SCREEN.color565(0,0,0);
@@ -211,7 +223,7 @@ void preloadImages(void)
             ColorPaper = SCREEN.color565(255,255,255);
             break;
 #endif
-#if FORCESKIN == skinBlackWhite
+#if CARDIMAGES || (FORCESKIN == skinBlackWhite)
         case skinBlackWhite:
             ColorBackground = SCREEN.color565(0,0,0);
             ColorForeground = SCREEN.color565(255,255,255);
@@ -221,6 +233,51 @@ void preloadImages(void)
             break;
 #endif
     }
+#if CARDIMAGES
+    //Every picture comes off the card, by the numbers tools/mkcard.py generated into
+    //cardindex.h. The skin is not decided here any more: the card holds all of them and
+    //CardImages_UseSkin picks one, so this runs again when that changes
+    BorderImages[0] = CardImages_Get(CARD_IMG_BORDER1);
+    BorderImages[1] = CardImages_Get(CARD_IMG_BORDER2);
+    BorderImages[2] = CardImages_Get(CARD_IMG_BORDER3);
+    BorderImages[3] = CardImages_Get(CARD_IMG_BORDER4);
+    BorderImages[4] = CardImages_Get(CARD_IMG_BORDER5);
+    BorderImages[5] = CardImages_Get(CARD_IMG_BORDER6);
+    BorderImages[6] = CardImages_Get(CARD_IMG_BORDER7);
+
+    ImgStageBlock1 = CardImages_Get(CARD_IMG_STAGEBLOCK1);
+    ImgStageBlock2 = CardImages_Get(CARD_IMG_STAGEBLOCK2);
+    ImgStageBlock3 = CardImages_Get(CARD_IMG_STAGEBLOCK3);
+    ImgStageBlock4 = CardImages_Get(CARD_IMG_STAGEBLOCK4);
+    ImgStageBlock5 = CardImages_Get(CARD_IMG_STAGEBLOCK5);
+    ImgStageBlock6 = CardImages_Get(CARD_IMG_STAGEBLOCK6);
+    ImgStageBlock7 = CardImages_Get(CARD_IMG_STAGEBLOCK7);
+    ImgStageBlock8 = CardImages_Get(CARD_IMG_STAGEBLOCK8);
+    ImgStageBlock9 = CardImages_Get(CARD_IMG_STAGEBLOCK9);
+    ImgStageBlock10 = CardImages_Get(CARD_IMG_STAGEBLOCK10);
+    
+    ImgRyfCloud = CardImages_Get(CARD_IMG_RYF_CLOUD);
+    ImgRyfSmallCloud = CardImages_Get(CARD_IMG_RYF_SMALLCLOUD);
+    ImgRyfFairy = CardImages_Get(CARD_IMG_RYF_FAIRY);
+    ImgSelect = CardImages_Get(CARD_IMG_SELECT);
+    ImgHand = CardImages_Get(CARD_IMG_HAND);
+    ImgOptionSelect = CardImages_Get(CARD_IMG_OPTIONSSELECT);
+    ImgShadow = CardImages_Get(CARD_IMG_RYF_SHADOW);
+    ImgPlayer = CardImages_Get(CARD_IMG_RYF_PLAYER);
+    ImgSpaceship = CardImages_Get(CARD_IMG_SPACESHIP);
+    ImgTitleSelector = CardImages_Get(CARD_IMG_TITLESELECTOR);
+    ImgPaper = CardImages_Get(CARD_IMG_PAPER);
+    ImgRoomBackground = CardImages_Get(CARD_IMG_ROOMBACKGROUND);
+    ImgBlockActiveImage = CardImages_Get(CARD_IMG_BLOCKACTIVEIMAGE);
+    ImgBlockImage = CardImages_Get(CARD_IMG_BLOCKIMAGE);
+    ImgIntro = CardImages_Get(CARD_IMG_INTRO);
+    ImgBetweenStage = CardImages_Get(CARD_IMG_BETWEENSTAGE);
+    ImgBetweenStageLevel1 = CardImages_Get(CARD_IMG_BETWEENSTAGELEVEL1);
+    ImgBridge = CardImages_Get(CARD_IMG_BRIDGE);
+    ImgOldMan = CardImages_Get(CARD_IMG_OLDMAN);
+    ImgStageClearKader = CardImages_Get(CARD_IMG_STAGECLEARKADER);
+    ImgTitle = CardImages_Get(CARD_IMG_TITLE);
+#else
     BorderImages[0] = SKIN_IMAGE(border1_data);
     BorderImages[1] = SKIN_IMAGE(border2_data);
     BorderImages[2] = SKIN_IMAGE(border3_data);
@@ -267,6 +324,7 @@ void preloadImages(void)
     ImgOldMan = SKIN_IMAGE(oldman_rle);
     ImgStageClearKader = SKIN_IMAGE(stageclearkader_rle); 
     ImgTitle = SKIN_IMAGE(title_rle);
+#endif
 }
 
 void fillScreen(uint16_t color)
@@ -339,7 +397,17 @@ void printText(int16_t x, int16_t y, const char* str, uint16_t color, uint16_t b
 //wide, at x,y on the screen and clipped to it. Every visible row comes out of flash in one
 //copy: LovyanGFX reads image data through plain pointers, but PROGMEM on the ESP8266 is flash
 //that only takes 32 bit reads, so the rows are read here with PLATFORM_READ_BYTES
+#if CARDIMAGES
+//the plain call is the keyed one with nothing left out
 void drawImagePart(int x, int y, int sx, int sy, int w, int h, const uint8_t* data, int dataWidth)
+{
+    drawImagePart(x, y, sx, sy, w, h, data, dataWidth, false);
+}
+
+void drawImagePart(int x, int y, int sx, int sy, int w, int h, const uint8_t* data, int dataWidth, bool transparent)
+#else
+void drawImagePart(int x, int y, int sx, int sy, int w, int h, const uint8_t* data, int dataWidth)
+#endif
 {
     if (!data)
         return;
@@ -361,7 +429,11 @@ void drawImagePart(int x, int y, int sx, int sy, int w, int h, const uint8_t* da
     //into the strip being put together, when there is one. See bandrender.h
     if (BandRender_Drawing())
     {
+  #if CARDIMAGES
+        BandRender_ImageCard(x, y, sx, sy, w, h, data, transparent);
+  #else
         BandRender_Image(x, y, sx, sy, w, h, data, dataWidth);
+  #endif
         return;
     }
 #endif
@@ -383,7 +455,14 @@ void drawImagePart(int x, int y, int sx, int sy, int w, int h, const uint8_t* da
     for (int r = r0; r < r1; r++)
     {
         const int dy = y + r;
+#if CARDIMAGES
+        //no flash array to index: the row comes from the arena or off the card, see cardimages.h.
+        //A read that does not come leaves the row black rather than whatever was in the scratch
+        if (!CardImages_Row(data, sx + c0, sy + r, cols, row))
+            memset(row, 0, (size_t)cols * sizeof(uint16_t));
+#else
         PLATFORM_READ_BYTES((uint8_t*)row, data + ((sy + r) * dataWidth + sx + c0) * sizeof(uint16_t), cols * sizeof(uint16_t));
+#endif
   #if SCREENBUFFER == 16
         uint16_t* d = &((uint16_t*)buffer)[dy * WINDOW_WIDTH + dx];
         //a 16 bpp sprite keeps its pixels byte swapped
@@ -398,6 +477,52 @@ void drawImagePart(int x, int y, int sx, int sy, int w, int h, const uint8_t* da
         for (int c = 0; c < cols; c++)
             SetBufferBit((uint8_t*)buffer, dx + c, dy, row[c]);
   #endif
+    }
+#else
+#if CARDIMAGES
+    //THE BUS RULE: where the card shares the display's bus, reading it takes the bus over - the
+    //panel is deselected and the SPI is set up for the card, see Platform_CardRead. So a row is
+    //fetched with nothing of the display's open, and only then sent, in a transaction of its own.
+    //A window around the whole part cannot survive a card read in the middle of filling it: that
+    //drew one row and then put the rest wherever the panel had been left pointing
+    for (int r = r0; r < r1; r++)
+    {
+        if (!CardImages_Row(data, sx + c0, sy + r, cols, row))
+            memset(row, 0, (size_t)cols * sizeof(uint16_t));
+        if (!transparent)
+        {
+            SCREEN.startWrite();
+  #if LOVYANGFX
+            SCREEN.setAddrWindow(dx, y + r, cols, 1);
+            //true: the values are plain RGB565, the library puts them in display order
+            SCREEN.writePixels(row, cols, true);
+  #else
+            GFX.pushImage(dx, y + r, cols, 1, row);
+  #endif
+            SCREEN.endWrite();
+            continue;
+        }
+        //the runs of pixels between the transparent ones, each sent on its own: what is left out
+        //has to keep what the display already shows
+        int c = 0;
+        while (c < cols)
+        {
+            while ((c < cols) && (row[c] == COLOR_TRANSPARENT))
+                c++;
+            const int start = c;
+            while ((c < cols) && (row[c] != COLOR_TRANSPARENT))
+                c++;
+            if (c == start)
+                continue;
+            SCREEN.startWrite();
+  #if LOVYANGFX
+            SCREEN.setAddrWindow(dx + start, y + r, c - start, 1);
+            SCREEN.writePixels(row + start, c - start, true);
+  #else
+            GFX.pushImage(dx + start, y + r, c - start, 1, row + start);
+  #endif
+            SCREEN.endWrite();
+        }
     }
 #else
     //straight to the display. The chip select sits on the I/O expander, every write
@@ -419,6 +544,7 @@ void drawImagePart(int x, int y, int sx, int sy, int w, int h, const uint8_t* da
     }
     SCREEN.endWrite();
 #endif
+#endif
 }
 #endif
 
@@ -438,6 +564,15 @@ void drawImageRLEPart(int x, int y, int sx, int sy, int w, int h, const uint8_t*
 {
     if (!data || (w <= 0) || (h <= 0))
         return;
+#if CARDIMAGES
+    //Nothing on the card is run length encoded: a card read is by offset and the game wants a row
+    //or a strip out of the middle of a picture, which only unpacked pixels allow. So the pictures
+    //the flash build packs are plain ones here and this is the plain draw
+    (void)dataWidth;
+    (void)dataHeight;
+    drawImagePart(x, y, sx, sy, w, h, data, 0, transparent);
+    return;
+#endif
 #if ONEBITIMAGES
   #if SCREENBUFFER == 0
     //into the strip being put together, when there is one. See bandrender.h
