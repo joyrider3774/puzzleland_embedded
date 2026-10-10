@@ -83,7 +83,7 @@ Every [release](https://github.com/joyrider3774/puzzleland_embedded/releases) ha
 | [PlayStation](https://en.wikipedia.org/wiki/PlayStation_(console)) | PSX_Puzzleland.exe | open it in an emulator or send it to a console that runs unsigned code, nothing is saved yet |
 | [PlayStation Portable](https://en.wikipedia.org/wiki/PlayStation_Portable) | PSP_Puzzleland.PBP | rename it to EBOOT.PBP and put it in ms0:/PSP/GAME/Puzzleland/ on the memory stick, or open it in PPSSPP |
 | [PlayStation Vita](https://en.wikipedia.org/wiki/PlayStation_Vita) | Vita_Puzzleland.vpk | install it with VitaShell on a Vita with homebrew enabled, or open it in Vita3K |
-| [CHGame](https://github.com/bateske/CHGame) | `CHGame_Puzzleland.bin` **and** `PUZZLELA.DAT` | flash it over USB with the `chgame-upload` that comes with the board package: `chgame-upload -port COM6 flash CHGame_Puzzleland.bin -run`, **and copy `PUZZLELA.DAT` into the root of the microSD card**. The game's pictures are on that card and it draws nothing without it: it says so on a screen of its own and stops. Copy the file to a freshly formatted card if it says the file is in too many pieces. One binary holds all thirty six rooms. |
+| [CHGame](https://github.com/bateske/CHGame) | `CHGame_Puzzleland.bin` **and** `PUZZLELA.DAT` | flash it over USB with the `chgame-upload` that comes with the board package: `chgame-upload -port COM6 flash CHGame_Puzzleland.bin -run`, **and copy `PUZZLELA.DAT` into the root of the microSD card**. The game's pictures and its rooms are both on that card and it draws nothing without it: it says so on a screen of its own and stops. Copy the file to a freshly formatted card if it says the file is in too many pieces. One binary holds all thirty six rooms. |
 | Windows | Windows_Puzzleland.exe | runs on its own, the options are saved next to it in Puzzleland.sav |
 | MS-DOS | DOS_Puzzleland.zip | unzip PUZZLELA.EXE onto a DOS machine or into DOSBox and run it, the options are saved next to it in PUZZLELA.SAV |
 | MS-DOS, not dithered | DOS_Puzzleland_ND.zip | the same program with `DITHERING` 0, unzip PUZZL_ND.EXE and run it the same way. On a 256 colour screen a shade the palette has no colour for is the nearer one it does have, instead of a pattern of the two |
@@ -198,13 +198,19 @@ which changes what the device can hold:
 
 * every skin is on the card in full RGB565, and the game can be asked for any of them while it
   runs, instead of the one reduced skin a flash build has room for;
-* all thirty six rooms are in one binary, so there is no longer a build per part;
+* all thirty six rooms are in one binary, so there is no longer a build per part, and the
+  rooms themselves are on the card as well: the game sits at 86% of the flash against 99.8%
+  when they were in it;
 * the intro picture, the first stage's own between stage picture and the paper the menus are
   written on are back. They were cut from this device for flash and nothing else.
 
 The card file is `PUZZLELA.DAT`, written into `releases/` by `tools/mkcard.py` as part of the build
 and released beside the binary. It holds a section per kind of data, so what the game later wants
-from the card, its levels say, goes in beside the art rather than in a file of its own. A picture
+from the card goes in beside the art rather than in a file of its own, which is where the rooms
+are: a section of their own, each room run length encoded exactly as flash held it by the game's
+own `tools/convert_levels.py`, and the reader walks one from the card a piece at a time instead
+of through a pointer. See `CARD_HAS_LEVELS` in `cardindex.h` and the `LVLS` section in
+`tools/mkcard.py`. A picture
 whose rows are each one colour is kept as one colour a row rather than as pixels, which is what
 makes a plain background cost nothing; this game has none large enough to be worth it, so it is
 not part of this build. The reader is CHSd, which the board package ships; a flash build needs

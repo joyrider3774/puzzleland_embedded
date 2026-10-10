@@ -45,15 +45,6 @@
 #if CARDIMAGES
 #define PLATFORM_HAS_CARD 1
 
-//No multi-block card reads here, see CARD_MULTIBLOCK in PlatformCHGame.cpp. They are worth
-//having - a read of several blocks in one command is close to nine times faster a block than a
-//command each - but they cost about 884 bytes of flash and this game has not got them: it is
-//the one that puts all 36 rooms in a single binary and sits at 99% of the 50944 bytes, with
-//472 to spare. The 512 byte second DMA buffer goes with them. Turn this back on with anything
-//that frees up the flash for it
-#ifndef CARD_MULTIBLOCK
-#define CARD_MULTIBLOCK 0
-#endif
 #endif
 
 #ifndef SCREENBUFFER

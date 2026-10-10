@@ -18,6 +18,13 @@
 //and kept here, so drawing it again is a copy; a full screen one is read a row or a strip at a
 //time and never kept. A screen whose pictures do not all fit still draws correctly, it just reads
 //them again, which CardImages_Reads() counts. See the arena in cardimages.cpp
+//How much of a room is held while it is read off the card. The reader asks for a byte at a
+//time and walks a room once, so this only decides how often the card is asked: a room is a few
+//hundred bytes encoded, so 64 is a handful of reads and nothing is kept afterwards
+#ifndef CARD_LEVEL_CHUNK
+#define CARD_LEVEL_CHUNK 64
+#endif
+
 #ifndef CARDARENA
 #define CARDARENA 3072
 #endif

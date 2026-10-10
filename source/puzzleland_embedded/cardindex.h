@@ -15,10 +15,11 @@
 #define CARD_FILE_83 "PUZZLELADAT"
 
 //every skin and picture name, hashed: a card made by another build has another stamp
-#define CARD_STAMP 0xECA4B8F6UL
+#define CARD_STAMP 0x724C97E9UL
 
 //the sections of the container, by the name its table holds. Levels will be another one
 #define CARD_SEC_IMAGES "IMGS"
+#define CARD_SEC_LEVELS "LVLS"
 
 //1 when any picture is kept as one colour a row, see FMT_ROWS. The game builds the
 //code that draws one only then: a card without any is a game that need not carry it
@@ -79,3 +80,16 @@ enum CardImage : uint8_t
 	CARD_IMG_TITLE = 36,
 	CARD_IMG_TITLESELECTOR = 37,
 };
+
+//1 when the card holds the level packs too, so the game reads them from there and not
+//out of flash. 0 leaves everything about the levels as it was
+#define CARD_HAS_LEVELS 1
+
+#define CARD_LEVEL_COUNT 36
+
+//the packs, in the order the index holds them, by the name the game knows
+#define CARD_LEVEL_NAMES { "puzzleland/level1.lev", "puzzleland/level2.lev", "puzzleland/level3.lev", "puzzleland/level4.lev", "puzzleland/level5.lev", "puzzleland/level6.lev", "puzzleland/level7.lev", "puzzleland/level8.lev", "puzzleland/level9.lev", "puzzleland/level10.lev", "puzzleland/level11.lev", "puzzleland/level12.lev", "puzzleland/level13.lev", "puzzleland/level14.lev", "puzzleland/level15.lev", "puzzleland/level16.lev", "puzzleland/level17.lev", "puzzleland/level18.lev", "puzzleland/level19.lev", "puzzleland/level20.lev", "puzzleland/level21.lev", "puzzleland/level22.lev", "puzzleland/level23.lev", "puzzleland/level24.lev", "puzzleland/level25.lev", "puzzleland/level26.lev", "puzzleland/level27.lev", "puzzleland/level28.lev", "puzzleland/level29.lev", "puzzleland/level30.lev", "puzzleland/level31.lev", "puzzleland/level32.lev", "puzzleland/level33.lev", "puzzleland/level34.lev", "puzzleland/level35.lev", "puzzleland/level36.lev" }
+
+//how many levels each pack holds, the entries above being one flat list
+#define CARD_LEVEL_PACKS 1
+#define CARD_LEVEL_PACK_COUNTS { 36 }

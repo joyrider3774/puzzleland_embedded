@@ -4,7 +4,12 @@
 #include "helperfuncs.h"
 #include "commonvars.h"
 #include "sound.h"
+//the rooms read off the card, for a build with CARDLEVELS on
+#include "cardimages.h"
+//the rooms are on the card in a card build and none of them are in flash, see CARDLEVELS
+#if !CARDLEVELS
 #include "levels.h"
+#endif
 #include "gamecommon.h"
 #include "bandrender.h"
 #include "game.h"
@@ -294,6 +299,14 @@ typedef struct LevelReader LevelReader;
 struct LevelReader
 {
 	const uint8_t* pos;
+#if CARDLEVELS
+	//The same walk over a room that lies on the card instead of in flash. A card is read by
+	//offset and not through a pointer, so a piece of the room is held here: a read a byte
+	//would be a card command a byte, and a room is only a few hundred bytes in all
+	uint32_t at, cardEnd;
+	uint16_t have, used;
+	uint8_t buf[CARD_LEVEL_CHUNK];
+#endif
 	uint8_t left;            //how many block types the run or the literal still owes
 	uint8_t repeated;        //the type a run repeats
 	bool inRun;
@@ -302,25 +315,65 @@ struct LevelReader
 static void LevelReaderInit(LevelReader* reader, const uint8_t* level)
 {
 	reader->pos = level;
+#if CARDLEVELS
+	reader->at = 0;
+	reader->cardEnd = 0;
+	reader->have = 0;
+	reader->used = 0;
+#endif
 	reader->left = 0;
 	reader->repeated = 0;
 	reader->inRun = false;
+}
+
+#if CARDLEVELS
+//the same, for a room that lies on the card: where it starts and how long it is
+static void LevelReaderInitCard(LevelReader* reader, uint32_t at, uint32_t length)
+{
+	LevelReaderInit(reader, NULL);
+	reader->at = at;
+	reader->cardEnd = at + length;
+}
+#endif
+
+//The next raw byte of the room, before the run length encoding is undone. This is the only
+//place that knows where a room is kept
+static uint8_t LevelRaw(LevelReader* reader)
+{
+#if CARDLEVELS
+	if (reader->used >= reader->have)
+	{
+		if (reader->at >= reader->cardEnd)
+			return 0;
+		uint32_t want = reader->cardEnd - reader->at;
+		if (want > CARD_LEVEL_CHUNK)
+			want = CARD_LEVEL_CHUNK;
+		if (!Platform_CardRead(reader->at, reader->buf, want))
+			return 0;
+		reader->at += want;
+		reader->have = (uint16_t)want;
+		reader->used = 0;
+	}
+	return reader->buf[reader->used++];
+#else
+	//PLATFORM_READ_BYTE is pgm_read_byte on some of the devices, which may look at what it
+	//is handed more than once, so the pointer is never stepped on inside it
+	const uint8_t value = (uint8_t)PLATFORM_READ_BYTE(reader->pos);
+	reader->pos++;
+	return value;
+#endif
 }
 
 static int8_t LevelReaderNext(LevelReader* reader)
 {
 	if (reader->left == 0)
 	{
-		//PLATFORM_READ_BYTE is pgm_read_byte on some of the devices, which may look at what it
-		//is handed more than once, so the pointer is never stepped on inside it
-		uint8_t control = (uint8_t)PLATFORM_READ_BYTE(reader->pos);
-		reader->pos++;
+		uint8_t control = LevelRaw(reader);
 		if (control & 0x80)
 		{
 			reader->inRun = true;
 			reader->left = (uint8_t)((control & 0x7F) + 1);
-			reader->repeated = (uint8_t)PLATFORM_READ_BYTE(reader->pos);
-			reader->pos++;
+			reader->repeated = LevelRaw(reader);
 		}
 		else
 		{
@@ -331,9 +384,7 @@ static int8_t LevelReaderNext(LevelReader* reader)
 	reader->left--;
 	if (reader->inRun)
 		return (int8_t)reader->repeated;
-	const uint8_t value = (uint8_t)PLATFORM_READ_BYTE(reader->pos);
-	reader->pos++;
-	return (int8_t)value;
+	return (int8_t)LevelRaw(reader);
 }
 
 void LoadLevel()
@@ -341,7 +392,15 @@ void LoadLevel()
 	int X,Y;
 	//Level counts from 1, the way the level%d.lev file names did
 	LevelReader reader;
+#if CARDLEVELS
+	//the rooms are on the card, one entry each and in the order the game numbers them
+	uint32_t at = 0, size = 0;
+	if (!CardLevels_Pack((uint8_t)(Level - 1), &at, &size))
+		return;
+	LevelReaderInitCard(&reader, at, size);
+#else
 	LevelReaderInit(&reader, level_data_files[0][Level - 1]);
+#endif
 	for (X=0;X<Cols;X++)
 	{ 	for (Y=0;Y <Rows;Y++)
 		{
