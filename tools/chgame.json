@@ -1,0 +1,12 @@
+{
+  "id": "puzzleland",
+  "title": "PUZZLE LAND",
+  "author": "Willems Davy",
+  "version": "1.0",
+  "description": "Puzzle Land is a remake of the gameboy game Daedalian opus also known as puzzle road in japan",
+  "genre": "Puzzle",
+  "license": "MIT",
+  "url": "https://github.com/joyrider3774/puzzleland_embedded",
+  "sourceUrl": "https://github.com/joyrider3774/puzzleland_embedded",
+  "sdcard": "sdcard"
+}
